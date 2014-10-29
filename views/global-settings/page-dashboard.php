@@ -316,6 +316,8 @@
 
         </div>
         <!-- Zozo Tabs End-->
+		<p>Access your <a href="../edit.php" target="_blank">Post(s)</a> or <a href="../edit.php?post_type=page" target="_blank">Page(s)</a> to view the full functionality of Seo Wizard.</p>
+		<br /><p><a href="http://seo.uk.net/?wizard" target="_blank"><img src="http://seo.uk.net/wp-content/uploads/2014/10/seo-banner.gif" /></a></p>
         <div class="wsw-global-save-view">
         <button type="button"  class="btn btn-primary" onclick="save_global_settings();">Save Settings</button>
         </div>
