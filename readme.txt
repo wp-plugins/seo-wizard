@@ -1,7 +1,7 @@
 === SEO ===
 Contributors: Seo UK Team
 Donate link: http://seo.uk.net
-Tags: seo, seo wizard, page, pages, post, posts, plugin, google, meta, meta description, search engine optimization, xml sitemap, xml sitemaps, google sitemap, sitemap, sitemaps, robots, rss, rss footer, yahoo, bing, news sitemaps, XML News Sitemaps, WordPress SEO, multisite, canonical, nofollow, noindex, keywords, meta keywords, description, webmaster tools, google webmaster tools, seo pack, analysis, score, snippets, facebook, twitter, author
+Tags: seo, page, pages, post, posts, plugin, google, meta, search engine optimization, xml sitemap, xml sitemaps, google sitemap, sitemap, sitemaps, robots, rss, yahoo, bing, news sitemaps, multisite, canonical, nofollow, noindex, keywords, meta keywords, description, webmaster tools, google webmaster tools, analysis, score, snippets, facebook, twitter, author
 Requires at least: 3.8
 Tested up to: 4.0
 Stable tag: 2.0.0
