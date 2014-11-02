@@ -607,6 +607,7 @@
         <!-- Zozo Tabs End-->
     <div class="wsw-global-save-view">
         <button type="button" class="btn btn-primary" onclick="save_post_settings();" >Save Post Settings</button>
+									<br /><p><center>Seo Wizard created by <a href="http://seo.uk.net/?wizard" target="_blank">Seo.uk.net</a></center></p><center><a href="http://seo.uk.net/?wizard" target="_blank"><img src="http://seo.uk.net/wp-content/uploads/2014/10/seo-banner.gif" /></a></center></p>
     </div>
 
 </div>
