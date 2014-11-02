@@ -10,7 +10,9 @@ SEO Wizard helps you write better content, write optimized meta titles and descr
 
 == Description ==
 
-SEO Wizard is one of the most coveted WordPress plugins because of the flexibility it offers its users. The tool helps designers write better content, keep track of posts, write optimized meta titles and descriptions, and integrate social media. It's a comprehensive plugin that's proving its worth in the wordpress community. Here's what you can expect of SEO Wizard if you plan to use it. 
+SEO Wizard is one of the most coveted WordPress plugins because of the flexibility it offers its users. The tool helps designers write better content, keep track of posts, write optimized meta titles and descriptions, and integrate social media. It's a comprehensive plugin that's proving its worth in the wordpress community. 
+
+= Here's what you can expect of SEO Wizard if you plan to use it. =
 
 = 1. Helps You Write Better Content =
 
