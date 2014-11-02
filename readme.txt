@@ -6,11 +6,11 @@ Requires at least: 3.8
 Tested up to: 4.0
 Stable tag: 2.0.0
 
-Improve your WordPress SEO: Write better content and have a fully optimized WordPress site using the SEO Wizard plugin.
+SEO Wizard helps designers write better content, keep track of posts, write optimized meta titles and descriptions, and integrate social media. 
 
 == Description ==
 
-SEO Wizard is one of the most coveted WordPress plugins because of the flexibility it offers its users. The tool helps designers write better content, keep track of posts, write optimized meta titles and descriptions, and integrate social media. It's a comprehensive app that's proving its worth in the web design community. Here's what you can expect of SEO Wizard if you plan to use it. 
+SEO Wizard is one of the most coveted WordPress plugins because of the flexibility it offers its users. The tool helps designers write better content, keep track of posts, write optimized meta titles and descriptions, and integrate social media. It's a comprehensive plugin that's proving its worth in the wordpress community. Here's what you can expect of SEO Wizard if you plan to use it. 
 
 = 1. Helps You Write Better Content =
 

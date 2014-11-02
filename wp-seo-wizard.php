@@ -2,13 +2,15 @@
 /*
 Plugin Name: Seo Wizard
 Plugin URI: http://seo.uk.net/seo-wizard/
-Description: Improve your WordPress SEO: Write better content and have a fully optimized WordPress site using the SEO Wizard plugin.
+Description: SEO Wizard helps designers write better content, keep track of posts, write optimized meta titles and descriptions, and integrate social media.
 Version: 2.0.0
 Author: Seo UK Team
 Author URI: http://seo.uk.net
 
 LICENSE
-    Copyright Seo UK Team  (email : wizard@seo.uk.net)
+    Copyright Seo UK Team 
+	(email : support@seo.uk.net) 
+	(website : http://www.seo.uk.net)
 */
 
 if ( ! defined( 'ABSPATH' ) ) {
