@@ -6,7 +6,7 @@ Requires at least: 3.8
 Tested up to: 4.0
 Stable tag: 2.0.0
 
-SEO Wizard helps designers write better content, keep track of posts, write optimized meta titles and descriptions, and integrate social media. 
+SEO Wizard helps you write better content, write optimized meta titles and descriptions, integrate social media, view post/page analysis and much more!
 
 == Description ==
 

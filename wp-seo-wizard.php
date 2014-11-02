@@ -2,7 +2,7 @@
 /*
 Plugin Name: Seo Wizard
 Plugin URI: http://seo.uk.net/seo-wizard/
-Description: SEO Wizard helps designers write better content, keep track of posts, write optimized meta titles and descriptions, and integrate social media.
+Description: SEO Wizard helps you write better content, write optimized meta titles and descriptions, integrate social media, view post/page analysis and much more!
 Version: 2.0.0
 Author: Seo UK Team
 Author URI: http://seo.uk.net
