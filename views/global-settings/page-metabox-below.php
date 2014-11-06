@@ -42,11 +42,73 @@
                 }
             );
         jQuery("#dashboard-page-post").show();
+
+
+
+        jQuery( '#wsw-notice-support-click-1' ).click( function (event) {
+
+            if(document.getElementById('chk_author_linking'))        document.getElementById('chk_author_linking').checked = true;
+
+            var data = {
+
+                action:'wsw_set_support_link'
+
+            };
+
+            jQuery.post(ajax_object.ajax_url, data, function(respond) {
+
+                jQuery("#wsw_support_title_1").hide();
+
+                jQuery("#wsw_support_title_2").show();
+
+                jQuery("#wsw_support_title_3").hide();
+
+                jQuery("#wsw_support_title_1_1").hide();
+
+            });
+
+        } );
+
+
+
+
     });
+
 </script>
+
+
+<style>
+
+    #wsw_support_title_1_1{
+
+        margin-top: 10px;
+        margin-bottom: 10px;
+
+        padding: 10px 10px 10px 10px;
+
+        border-color: rgba(0, 0, 0, 0.22);
+
+        border-width: 1px;
+
+        border-style: solid;
+
+        border-radius: 2px;
+
+        margin-left: 0px;
+
+    }
+
+</style>
 
 <div id="dashboard-page-post" style="display: none; margin-right: 10px;">
     <span id="seowizard-post-id" class="wsw-ui-hidden"><?php echo $wsw_post_id; ?></span>
+
+    <div id="wsw_support_title_1_1" style="<?php echo WSW_Main::$settings['chk_author_linking'] == '1' ? 'display: none;':'';?>">
+
+        if you enjoy our plugin support us by enabling the author credit link, click
+        <a href="#" id="wsw-notice-support-click-1"> 'OK' </a> to enable it.
+
+    </div>
 
         <!-- Zozo Tabs Start-->
         <div id="tabbed-nav">
