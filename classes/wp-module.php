@@ -1,11 +1,11 @@
 <?php
 
-if ( ! class_exists( 'WP_Module' ) ) {
+if ( ! class_exists( 'WSW_Module' ) ) {
 
 	/**
 	 * Abstract class to define/implement base methods for all module classes
 	 */
-	abstract class WP_Module {
+	abstract class WSW_Module {
 		private static $instances = array();
 		/**
 		 * Public getter for protected variables
@@ -104,5 +104,5 @@ if ( ! class_exists( 'WP_Module' ) ) {
 		 */
 		abstract protected function __construct();
 
-	    } // end WP_Module
+	    } // end WSW_Module
 }

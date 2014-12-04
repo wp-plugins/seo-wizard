@@ -18,23 +18,23 @@ function save_global_settings()
     mRadio = jQuery('input[name=opt_image_title_type]');
     var opt_image_title_type = mRadio.filter(':checked').val();
 
-
     var data = {
-
         action:'wsw_save_global_settings',
         chk_keyword_to_titles  : (jQuery('#chk_keyword_to_titles').attr('checked')) ? '1' : '0',
-        chk_convertion_post_slug  : (jQuery('#chk_convertion_post_slug').attr('checked')) ? '1' : '0',
+
         chk_nofollow_in_external  : (jQuery('#chk_nofollow_in_external').attr('checked')) ? '1' : '0',
         chk_nofollow_in_image  : (jQuery('#chk_nofollow_in_image').attr('checked')) ? '1' : '0',
         chk_use_facebook  : (jQuery('#chk_use_facebook').attr('checked')) ? '1' : '0',
         chk_use_twitter  : (jQuery('#chk_use_twitter').attr('checked')) ? '1' : '0',
         chk_use_richsnippets  : (jQuery('#chk_use_richsnippets').attr('checked')) ? '1' : '0',
         chk_author_linking  : (jQuery('#chk_author_linking').attr('checked')) ? '1' : '0',
-        chk_use_dublin  : (jQuery('#chk_use_dublin').attr('checked')) ? '1' : '0',
+
 
         chk_keyword_decorate_bold  : (jQuery('#chk_keyword_decorate_bold').attr('checked')) ? '1' : '0',
         chk_keyword_decorate_italic  : (jQuery('#chk_keyword_decorate_italic').attr('checked')) ? '1' : '0',
         chk_keyword_decorate_underline  : (jQuery('#chk_keyword_decorate_underline').attr('checked')) ? '1' : '0',
+
+
         opt_keyword_decorate_bold_type : opt_keyword_decorate_bold_type,
         opt_keyword_decorate_italic_type : opt_keyword_decorate_italic_type,
         opt_keyword_decorate_underline_type : opt_keyword_decorate_underline_type,
@@ -49,11 +49,16 @@ function save_global_settings()
 
         chk_block_login_page  : (jQuery('#chk_block_login_page').attr('checked')) ? '1' : '0',
         chk_block_admin_page  : (jQuery('#chk_block_admin_page').attr('checked')) ? '1' : '0',
-        lsi_bing_api_key  : jQuery('#lsi_bing_api_key').val()
+        lsi_bing_api_key  : jQuery('#lsi_bing_api_key').val(),
+
+        chk_tweak_permalink  : (jQuery('#chk_tweak_permalink').attr('checked')) ? '1' : '0',
+        chk_use_meta_robot  : (jQuery('#chk_use_meta_robot').attr('checked')) ? '1' : '0',
+        chk_make_sitemap  : (jQuery('#chk_make_sitemap').attr('checked')) ? '1' : '0'
 
     };
 
     jQuery.post(ajax_object.ajax_url, data, function(respond) {
+
         jQuery("#wsw-notice-save-view").show();
     });
 
@@ -89,6 +94,8 @@ function save_post_settings()
         is_meta_title  : (jQuery('#wsw_is_meta_title').attr('checked')) ? '1' : '',
         meta_title:jQuery('#wsw_meta_title').attr('value'),
         is_meta_description  : (jQuery('#wsw_is_meta_description').attr('checked')) ? '1' : '',
+        is_meta_robot_noindex  : (jQuery('#wsw_is_meta_robot_noindex').attr('checked')) ? '1' : '',
+        is_meta_robot_nofollow  : (jQuery('#wsw_is_meta_robot_nofollow').attr('checked')) ? '1' : '',
         meta_description:jQuery('#wsw_meta_description').attr('value'),
         is_over_sentences  : (jQuery('#wsw_is_over_sentences').attr('checked')) ? '1' : '',
         first_over_sentences  : (jQuery('#wsw_first_over_sentences').attr('checked')) ? '1' : '',
@@ -136,6 +143,9 @@ function save_post_settings()
     };
 
     jQuery.post(ajax_object.ajax_url, data, function(respond) {
+
+        jQuery("#wsw-notice-save-view").show();
+        alert('Save Settings Successfully.!');
 
     });
 
@@ -230,8 +240,6 @@ function show_page_lsi()
 
 function showMessage(message)
 {
-
-
    // jQuery('#wsw_dialog_message').text(message);
     jQuery("#wsw_dialog").show();
    // jQuery('#dialog').dialog();
@@ -346,8 +354,3 @@ function show_page_content()
 
 
 }
-
-
-
-
-

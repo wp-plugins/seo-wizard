@@ -2,10 +2,10 @@
 
 if ( ! class_exists( 'WSW_Dashboard' ) ) {
 
-	/**
-	 * Handles plugin settings and user profile meta fields
-	 */
-	class WSW_Dashboard extends WP_Module {
+    /**
+     * Handles plugin settings and user profile meta fields
+     */
+    class WSW_Dashboard extends WSW_Module {
 
         const page_id = 'wsw_dashboard_page';
         const PREFIX     = 'wsw-';
@@ -14,28 +14,247 @@ if ( ! class_exists( 'WSW_Dashboard' ) ) {
         protected  $page_hook;
         static $post_types_to_ignore;
 
-		/**
-		 * Constructor
-		 */
-		protected function __construct() {
+        /**
+         * Constructor
+         */
+        protected function __construct() {
             self::$post_types_to_ignore = array('thirstylink');
             $this->register_hook_callbacks();
-            //$this->modules = array('WSW_Score'    => WSW_Score::get_instance());
-		}
 
-		/**
-		 * Register callbacks for actions and filters
-		 */
-		public function register_hook_callbacks() {
+        }
 
-			add_action('admin_menu',                        __CLASS__ . '::register_settings_pages' );
+        /**
+         * Register callbacks for actions and filters
+         */
+        public function register_hook_callbacks() {
+
+            add_action('admin_menu',                        __CLASS__ . '::register_settings_pages' );
 
             add_filter('manage_posts_columns',              __CLASS__ . '::handle_add_columns', 10, 2);
             add_filter('manage_pages_columns',              __CLASS__ . '::handle_add_columns', 10, 2);
 
             add_action('manage_posts_custom_column',        __CLASS__ . '::handle_show_columns_values', 10, 2);
             add_action('manage_pages_custom_column',        __CLASS__ . '::handle_show_columns_values', 10, 2);
+
+            add_action('seowizard_sitemap_event', __CLASS__ . '::generate_sitemap_cron');
+
+            add_action( 'template_redirect', __CLASS__ . '::log_404s'  );
         }
+
+        function log_404s () {
+            if( !is_404() )  return;
+
+            $data = array(
+                'date' => current_time('mysql'),
+                'url' => $_SERVER['REQUEST_URI']
+            );
+            $data['ip'] = $_SERVER['REMOTE_ADDR'];
+
+            $data['ref'] = $_SERVER['HTTP_REFERER'];
+
+            $data['ua'] = $_SERVER['HTTP_USER_AGENT'];
+
+            WSW_Model_Log::add_record($data);
+        }
+
+        /**
+         * Called via the cron job for actually generating the sitemap.
+         */
+        function generate_sitemap_cron() {
+            self::build_sitemap_by_cron();
+        } // end generate_sitemap_cron
+
+        /**
+         * Returns the root directory of a WordPress installation. This is used
+         * to write the sitemap into the site's root.
+         *
+         * http://stackoverflow.com/questions/2354633/wordpress-root-directory
+         */
+
+        function get_sitemap_location() {
+
+            $base = dirname(__FILE__);
+
+            $path = false;
+            if (@file_exists(dirname(dirname(dirname($base)))."/wp-config.php"))
+            {
+                $path = dirname(dirname(dirname($base)))."/sitemap.xml";
+            }
+            else{
+                if (@file_exists(dirname(dirname(dirname(dirname($base))))."/wp-config.php"))
+                {
+                    $path = dirname(dirname(dirname(dirname($base))))."/sitemap.xml";
+                }
+                else
+                    $path = false;
+            }
+
+            if ($path != false)
+            {
+                $path = str_replace("\\", "/", $path);
+            }
+
+
+            return $path;
+
+        } // end get_sitemap_location
+        /**
+         * Writes the header of the XML file to the sitemap.
+         *
+         * @handle	The resource used to write data to disk.
+         */
+        function write_sitemap_header($handle) {
+
+            $sitemap = '<?xml version="1.0" encoding="' . get_bloginfo('charset') . '"?>';
+            $sitemap .= "\n";
+            $sitemap .= '<urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ';
+            $sitemap .= 'xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" ';
+            $sitemap .= 'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
+            $sitemap .= "\n";
+            $sitemap .= '';
+
+            fwrite($handle, $sitemap);
+
+        } // end write_sitemap_header
+
+        /**
+         * Creates a gzip archive of the sitemap and writes it to disk.
+         */
+        function gzip_sitemap() {
+
+            $handle = fopen(self::get_sitemap_location() . '.gz', 'w');
+            $sitemap = implode("", file(self::get_sitemap_location()));
+            if($handle != null) {
+                fwrite($handle, gzencode($sitemap, 9));
+                fclose($handle);
+            } // end if
+
+        } // end gzip_sitemap
+
+        function build_sitemap_by_cron() {
+            if(WSW_Main::$settings['chk_make_sitemap'] == '1'){
+                self::build_sitemap();
+            }
+        }
+
+
+        static public function ajax_build_sitemap() {
+            $settings = WSW_Main::$settings;
+            $settings['chk_make_sitemap'] = '1';
+            WSW_Settings::update_options($settings);
+
+        }
+
+
+        /**
+         * Actually generates the sitemap. The function is accessible via the administrator's
+         * dashboard and by the WordPress scheduler.
+         *
+         * @is_scheduled	Whether or not this function is being called via the scheduler.
+         */
+        static public function build_sitemap() {
+
+            global $wpdb;
+
+            $all_posts = array();		// track all of the posts that we've written
+            $limit = 25;						// process 25 rows at a time (for big blogs)
+            $processed_posts = 0; 	// used to track how many rows we've processed
+
+            $total_posts = $wpdb->get_var("
+			select count(ID)
+			from $wpdb->posts
+			where post_status = 'publish' and post_password = '' and post_type in ('post', 'page')
+		");
+
+            // open the file to begin writing the sitemap
+            $handle = fopen(self::get_sitemap_location(), 'w');
+            if($handle == null) { // we don't have permissions to do this. throw up an error message.
+
+                exit;
+            } // end if
+
+            self::write_sitemap_header($handle);
+
+            // first, write the homepage...
+            $homepage = "\t<url>\n";
+            $homepage .= "\t\t<loc>" . get_bloginfo('url') . "/</loc>\n";
+            $homepage .= "\t\t<changefreq>daily</changefreq>\n";
+            $homepage .= "\t\t<priority>1</priority>\n";
+            $homepage .= "\t</url>\n";
+            fwrite($handle, $homepage);
+
+            // and now we write the posts...
+            while($total_posts > $processed_posts) {
+
+                $posts = $wpdb->get_results("
+				select id, post_title, post_name, post_modified, post_type, guid
+				from $wpdb->posts where post_status = 'publish' and post_password = '' and post_type in ('post', 'page')
+				order by post_modified DESC
+				limit $limit offset $processed_posts
+			");
+
+                // write a sitemap entry for each URL in the array
+                foreach($posts as $post) {
+
+                    // create the entry for this post
+                    $current_post = '';
+                    $current_post .= "\t<url>\n";
+                    $current_post .= "\t\t<loc>" . get_permalink($post->id) . "</loc>\n";
+                    $current_post .= "\t\t<lastmod>" . date(DATE_W3C, strtotime($post->post_modified)) . "</lastmod>\n";
+
+                    if($post->post_type == 'post') {
+                        $current_post .= "\t\t<changefreq>weekly</changefreq>\n";
+                        $current_post .= "\t\t<priority>" . 0.8 . "</priority>\n";
+                    } else {
+                        $current_post .= "\t\t<changefreq>monthly</changefreq>\n";
+                        $current_post .= "\t\t<priority>" . 0.6 . "</priority>\n";
+                    } // end if/else
+
+                    $current_post .= "\t</url>\n";
+
+                    // only write this entry if we've not already done so
+                    if(!in_array($post->guid, $all_posts)) {
+                        fwrite($handle, $current_post);
+                        $all_posts[] = $post->guid;
+                    } // end if
+
+                } // end foreach
+
+                $processed_posts += $limit;
+
+            } // end while
+
+            // write out the footer
+            $footer = '</urlset>';
+            fwrite($handle, $footer);
+
+            $date = date('F j, Y');
+
+
+            // gzip the sitemap
+            self::gzip_sitemap();
+
+
+            // submit to google and bing (stamp the time for reference)
+            $time = date('g:i a');
+            $sitemap_url = urlencode(get_bloginfo('url') . '/sitemap.xml.gz');
+
+            $response = wp_remote_get('http://www.google.com/webmasters/tools/ping?sitemap=' . $sitemap_url);
+            if(!is_wp_error($response) && $response['response']['code'] == '200') {
+                fwrite($handle, "<!-- Successfully submitted sitemap to Google on " . $date . " (" . $time . ") -->\n");
+            } // end if
+
+            $response = wp_remote_get('http://www.bing.com/webmaster/ping.aspx?sitemap=' . $sitemap_url);
+            if(!is_wp_error($response) && $response['response']['code'] == '200') {
+                fwrite($handle, "<!-- Successfully submitted sitemap to Bing on " . $date . " (" . $time . ") -->\n");
+            } // end if
+
+            fclose($handle);
+            $wpdb->flush();
+
+
+        } // end generate_sitemap
+
 
         /**
          * Add columns to Posts/Pages
@@ -91,13 +310,13 @@ if ( ! class_exists( 'WSW_Dashboard' ) ) {
             }
         }
 
-		/**
-		 * Adds pages to the Admin Panel menu
-		 */
-		public function register_settings_pages() {
+        /**
+         * Adds pages to the Admin Panel menu
+         */
+        public function register_settings_pages() {
 
             $hook = add_menu_page(WSW_NAME . ' Settings', WSW_NAME , 'manage_options', self::page_id, __CLASS__ . '::markup_dashboard_page');
-          //  $hook = add_submenu_page(self::page_id, 'Dashboard', 'Dashboard', 'manage_options',self::page_id, __CLASS__ . '::markup_dashboard_page');
+            //  $hook = add_submenu_page(self::page_id, 'Dashboard', 'Dashboard', 'manage_options',self::page_id, __CLASS__ . '::markup_dashboard_page');
 
             add_action( 'admin_print_scripts-' . $hook, __CLASS__ . '::enqueue_scripts');
             add_action( 'admin_print_styles-' . $hook, __CLASS__ . '::enqueue_styles');
@@ -106,7 +325,7 @@ if ( ! class_exists( 'WSW_Dashboard' ) ) {
 
             foreach ($types_to_have_boxes as $types_to_have_boxes_name) {
                 if (!in_array($types_to_have_boxes_name, self::$post_types_to_ignore)) {
-                     $metabox_below	= add_meta_box( 'WSW_metabox_below', 'SEOWizard Settings', __CLASS__ . '::show_metabox_below', $types_to_have_boxes_name,'normal','core');
+                    $metabox_below	= add_meta_box( 'WSW_metabox_below', 'SEOWizard Settings', __CLASS__ . '::show_metabox_below', $types_to_have_boxes_name,'normal','core');
 
                 }
             }
@@ -147,30 +366,31 @@ if ( ! class_exists( 'WSW_Dashboard' ) ) {
             wp_enqueue_style(self::PREFIX . 'colorpicker-css');
         }
 
-		/**
-		 * Creates the markup for the Dashboard page
-		 */
-		public function markup_dashboard_page() {
+        /**
+         * Creates the markup for the Dashboard page
+         */
+        public function markup_dashboard_page() {
 
             WSW_Main::markup_settings_header();
-			if ( current_user_can( WSW_Main::REQUIRED_CAPABILITY ) ) {
+            if ( current_user_can( WSW_Main::REQUIRED_CAPABILITY ) ) {
 
                 $variables = array();
 
                 $variables['chk_keyword_to_titles'] = WSW_Main::$settings['chk_keyword_to_titles'];
-                $variables['chk_convertion_post_slug'] = WSW_Main::$settings['chk_convertion_post_slug'];
+                $variables['chk_tweak_permalink'] = WSW_Main::$settings['chk_tweak_permalink'];
 
                 $variables['chk_nofollow_in_external'] = WSW_Main::$settings['chk_nofollow_in_external'];
                 $variables['chk_nofollow_in_image'] = WSW_Main::$settings['chk_nofollow_in_image'];
                 $variables['chk_use_facebook'] = WSW_Main::$settings['chk_use_facebook'];
 
                 $variables['chk_use_twitter'] = WSW_Main::$settings['chk_use_twitter'];
-                $variables['chk_use_dublin'] = WSW_Main::$settings['chk_use_dublin'];
+                $variables['chk_use_meta_robot'] = WSW_Main::$settings['chk_use_meta_robot'];
                 $variables['chk_use_richsnippets'] = WSW_Main::$settings['chk_use_richsnippets'];
 
                 $variables['chk_keyword_decorate_bold'] = WSW_Main::$settings['chk_keyword_decorate_bold'];
                 $variables['chk_keyword_decorate_italic'] = WSW_Main::$settings['chk_keyword_decorate_italic'];
                 $variables['chk_keyword_decorate_underline'] = WSW_Main::$settings['chk_keyword_decorate_underline'];
+                $variables['chk_make_sitemap'] = WSW_Main::$settings['chk_make_sitemap'];
 
                 $variables['opt_keyword_decorate_bold_type'] = WSW_Main::$settings['opt_keyword_decorate_bold_type'];
                 $variables['opt_keyword_decorate_italic_type'] = WSW_Main::$settings['opt_keyword_decorate_italic_type'];
@@ -192,61 +412,33 @@ if ( ! class_exists( 'WSW_Dashboard' ) ) {
                 $variables['chk_block_admin_page'] = WSW_Main::$settings['chk_block_admin_page'];
                 $variables['lsi_bing_api_key'] = WSW_Main::$settings['lsi_bing_api_key'];
 
+                $variables['first_tab'] = 'tab1';
+
+                if($_GET['action'] == 'Trash'){
+                    WSW_Model_Log::remove_record($_GET['book']);
+                    $variables['first_tab'] = 'tab4';
+                }else if($_GET['paged']){
+
+                    $variables['first_tab'] = 'tab4';
+                }
+
+                if($_POST['page'] == 'wsw_log_404'){
+
+                    if($_POST['log404']){
+                        foreach( $_POST['log404'] as $log404 ){
+                            WSW_Model_Log::remove_record($log404);
+                        }
+                    }
+                    $variables['first_tab'] = 'tab4';
+                }
+
                 echo self::render_template( 'global-settings/page-dashboard.php', $variables );
-			}
+            }
             else {
-				wp_die( 'Access denied.' );
-			}
-		}
-
-        /**
-         * Save Global Settings
-         * */
-        function save_global_settings()
-        {
-            $options = WSW_Main::$settings;
-
-            $options['chk_keyword_to_titles'] = $_POST['chk_keyword_to_titles'] ? '1': '0';
-            $options['chk_convertion_post_slug'] = $_POST['chk_convertion_post_slug'] ? '1': '0';
-
-            $options['chk_nofollow_in_external'] = $_POST['chk_nofollow_in_external'] ? '1': '0';
-            $options['chk_nofollow_in_image'] = $_POST['chk_nofollow_in_image'] ? '1': '0';
-            $options['chk_use_facebook'] = $_POST['chk_use_facebook'] ? '1': '0';
-            $options['chk_use_twitter'] = $_POST['chk_use_twitter'] ? '1': '0';
-            $options['chk_use_dublin'] = $_POST['chk_use_dublin'] ? '1': '0';
-            $options['chk_use_richsnippets'] = $_POST['chk_use_richsnippets'] ? '1': '0';
-
-            $options['chk_keyword_decorate_bold'] = $_POST['chk_keyword_decorate_bold'] ? '1': '0';
-            $options['chk_keyword_decorate_italic'] = $_POST['chk_keyword_decorate_italic'] ? '1': '0';
-            $options['chk_keyword_decorate_underline'] = $_POST['chk_keyword_decorate_underline'] ? '1': '0';
-
-            $options['opt_keyword_decorate_bold_type'] = $_POST['opt_keyword_decorate_bold_type'];
-            $options['opt_keyword_decorate_italic_type'] = $_POST['opt_keyword_decorate_italic_type'];
-            $options['opt_keyword_decorate_underline_type'] = $_POST['opt_keyword_decorate_underline_type'];
-
-            $options['opt_image_alternate_type'] = $_POST['opt_image_alternate_type'];
-            $options['opt_image_title_type'] = $_POST['opt_image_title_type'];
-            $options['txt_image_alternate'] = $_POST['txt_image_alternate'];
-            $options['txt_image_title'] = $_POST['txt_image_title'];
-
-            $options['chk_use_headings_h1'] = $_POST['chk_use_headings_h1'] ? '1': '0';
-            $options['chk_use_headings_h2'] = $_POST['chk_use_headings_h2'] ? '1': '0';
-            $options['chk_use_headings_h3'] = $_POST['chk_use_headings_h3'] ? '1': '0';
-
-            $options['chk_tagging_using_google'] = $_POST['chk_tagging_using_google'] ? '1': '0';
-            $options['chk_block_login_page'] = $_POST['chk_block_login_page'] ? '1': '0';
-            $options['chk_block_admin_page'] = $_POST['chk_block_admin_page'] ? '1': '0';
-
-            $options['txt_generic_tags'] = $_POST['txt_generic_tags'];
-            $options['chk_author_linking'] = $_POST['chk_author_linking'] ? '1': '0';
-            $options['lsi_bing_api_key'] = $_POST['lsi_bing_api_key'];
-
-            WSW_Settings::update_options($options);
-            wp_redirect(add_query_arg('page', WSW_Dashboard::page_id , admin_url('admin.php')));
-            add_notice( ' Save Settings Successfully.' , 'update' );
-
-            exit;
+                wp_die( 'Access denied.' );
+            }
         }
+
 
 
         /** Ajax module for save Global Settings */
@@ -254,37 +446,40 @@ if ( ! class_exists( 'WSW_Dashboard' ) ) {
 
             $options = WSW_Main::$settings;
 
-            $options['chk_keyword_to_titles'] = $_POST['chk_keyword_to_titles'];
-            $options['chk_convertion_post_slug'] = $_POST['chk_convertion_post_slug'];
-            $options['chk_nofollow_in_external'] = $_POST['chk_nofollow_in_external'];
-            $options['chk_nofollow_in_image'] = $_POST['chk_nofollow_in_image'];
-            $options['chk_use_facebook'] = $_POST['chk_use_facebook'];
-            $options['chk_use_twitter'] = $_POST['chk_use_twitter'];
-            $options['chk_use_dublin'] = $_POST['chk_use_dublin'];
-            $options['chk_use_richsnippets'] = $_POST['chk_use_richsnippets'];
-            $options['chk_author_linking'] = $_POST['chk_author_linking'];
 
-            $options['chk_keyword_decorate_bold'] = $_POST['chk_keyword_decorate_bold'];
-            $options['chk_keyword_decorate_italic'] = $_POST['chk_keyword_decorate_italic'];
-            $options['chk_keyword_decorate_underline'] = $_POST['chk_keyword_decorate_underline'];
+            if(!is_null($_POST['chk_keyword_to_titles'])) $options['chk_keyword_to_titles'] = $_POST['chk_keyword_to_titles'];
 
-            $options['opt_keyword_decorate_bold_type'] = $_POST['opt_keyword_decorate_bold_type'];
-            $options['opt_keyword_decorate_italic_type'] = $_POST['opt_keyword_decorate_italic_type'];
-            $options['opt_keyword_decorate_underline_type'] = $_POST['opt_keyword_decorate_underline_type'];
+            if(!is_null($_POST['chk_tweak_permalink'])) $options['chk_tweak_permalink'] = $_POST['chk_tweak_permalink'];
+            if(!is_null($_POST['chk_nofollow_in_external'])) $options['chk_nofollow_in_external'] = $_POST['chk_nofollow_in_external'];
+            if(!is_null($_POST['chk_nofollow_in_image'])) $options['chk_nofollow_in_image'] = $_POST['chk_nofollow_in_image'];
+            if(!is_null($_POST['chk_use_facebook'])) $options['chk_use_facebook'] = $_POST['chk_use_facebook'];
+            if(!is_null($_POST['chk_use_twitter'])) $options['chk_use_twitter'] = $_POST['chk_use_twitter'];
+            if(!is_null($_POST['chk_use_meta_robot'])) $options['chk_use_meta_robot'] = $_POST['chk_use_meta_robot'];
+            if(!is_null($_POST['chk_use_richsnippets'])) $options['chk_use_richsnippets'] = $_POST['chk_use_richsnippets'];
+            if(!is_null($_POST['chk_author_linking'])) $options['chk_author_linking'] = $_POST['chk_author_linking'];
 
-            $options['opt_image_alternate_type'] = $_POST['opt_image_alternate_type'];
-            $options['opt_image_title_type'] = $_POST['opt_image_title_type'];
-            $options['txt_image_alternate'] = $_POST['txt_image_alternate'];
-            $options['txt_image_title'] = $_POST['txt_image_title'];
+            if(!is_null($_POST['chk_keyword_decorate_bold'])) $options['chk_keyword_decorate_bold'] = $_POST['chk_keyword_decorate_bold'];
+            if(!is_null($_POST['chk_keyword_decorate_italic'])) $options['chk_keyword_decorate_italic'] = $_POST['chk_keyword_decorate_italic'];
+            if(!is_null($_POST['chk_keyword_decorate_underline'])) $options['chk_keyword_decorate_underline'] = $_POST['chk_keyword_decorate_underline'];
+            if(!is_null($_POST['chk_make_sitemap'])) $options['chk_make_sitemap'] = $_POST['chk_make_sitemap'];
 
-            $options['txt_generic_tags'] = $_POST['txt_generic_tags'];
-            $options['chk_tagging_using_google'] = $_POST['chk_tagging_using_google'];
+            if(!is_null($_POST['opt_keyword_decorate_bold_type'])) $options['opt_keyword_decorate_bold_type'] = $_POST['opt_keyword_decorate_bold_type'];
+            if(!is_null($_POST['opt_keyword_decorate_italic_type'])) $options['opt_keyword_decorate_italic_type'] = $_POST['opt_keyword_decorate_italic_type'];
+            if(!is_null($_POST['opt_keyword_decorate_underline_type'])) $options['opt_keyword_decorate_underline_type'] = $_POST['opt_keyword_decorate_underline_type'];
+
+            if(!is_null($_POST['opt_image_alternate_type'])) $options['opt_image_alternate_type'] = $_POST['opt_image_alternate_type'];
+            if(!is_null($_POST['opt_image_title_type'])) $options['opt_image_title_type'] = $_POST['opt_image_title_type'];
+            if(!is_null($_POST['txt_image_alternate'])) $options['txt_image_alternate'] = $_POST['txt_image_alternate'];
+            if(!is_null($_POST['txt_image_title'])) $options['txt_image_title'] = $_POST['txt_image_title'];
+
+            if(!is_null($_POST['txt_generic_tags'])) $options['txt_generic_tags'] = $_POST['txt_generic_tags'];
+            if(!is_null($_POST['chk_tagging_using_google'])) $options['chk_tagging_using_google'] = $_POST['chk_tagging_using_google'];
 
 
-            $options['chk_block_login_page'] = $_POST['chk_block_login_page'];
-            $options['chk_block_admin_page'] = $_POST['chk_block_admin_page'];
+            if(!is_null($_POST['chk_block_login_page'])) $options['chk_block_login_page'] = $_POST['chk_block_login_page'];
+            if(!is_null($_POST['chk_block_admin_page'])) $options['chk_block_admin_page'] = $_POST['chk_block_admin_page'];
 
-            $options['lsi_bing_api_key'] = $_POST['lsi_bing_api_key'];
+            if(!is_null($_POST['lsi_bing_api_key'])) $options['lsi_bing_api_key'] = $_POST['lsi_bing_api_key'];
 
             WSW_Settings::update_options($options);
 
@@ -313,6 +508,8 @@ if ( ! class_exists( 'WSW_Dashboard' ) ) {
             $settings['is_meta_title'] = $_POST['is_meta_title'];
             $settings['meta_title'] = $_POST['meta_title'];
             $settings['is_meta_description'] = $_POST['is_meta_description'];
+            $settings['is_meta_robot_noindex'] = $_POST['is_meta_robot_noindex'];
+            $settings['is_meta_robot_nofollow'] = $_POST['is_meta_robot_nofollow'];
             $settings['meta_description'] = $_POST['meta_description'];
             $settings['is_over_sentences'] = $_POST['is_over_sentences'];
             $settings['first_over_sentences'] = $_POST['first_over_sentences'];
@@ -357,7 +554,7 @@ if ( ! class_exists( 'WSW_Dashboard' ) ) {
             $settings['social_twitter_title'] = $_POST['social_twitter_title'];
             $settings['social_twitter_description'] = $_POST['social_twitter_description'];
 
-          update_post_meta($post_id, 'wsw-settings', $settings);
+            update_post_meta($post_id, 'wsw-settings', $settings);
 
             die();
         }
@@ -385,6 +582,8 @@ if ( ! class_exists( 'WSW_Dashboard' ) ) {
                 $variables['wsw_is_meta_title'] = $settings[0]['is_meta_title'];
                 $variables['wsw_meta_title'] = $settings[0]['meta_title'];
                 $variables['wsw_is_meta_description'] = $settings[0]['is_meta_description'];
+                $variables['wsw_is_meta_robot_noindex'] = $settings[0]['is_meta_robot_noindex'];
+                $variables['wsw_is_meta_robot_nofollow'] = $settings[0]['is_meta_robot_nofollow'];
                 $variables['wsw_meta_description'] = $settings[0]['meta_description'];
                 $variables['wsw_is_over_sentences'] = $settings[0]['is_over_sentences'];
                 $variables['wsw_first_over_sentences'] = $settings[0]['first_over_sentences'];
@@ -670,7 +869,7 @@ if ( ! class_exists( 'WSW_Dashboard' ) ) {
 
             $variables['wsw_youtube_keyword'] = $keyword;
             $variables['wsw_youtube_list'] = $data_to_return;
-          //  echo self::render_template( 'templates/page-youtube.php', $variables );
+            //  echo self::render_template( 'templates/page-youtube.php', $variables );
 
             $json = json_encode($data_to_return); echo $json;
 

@@ -119,7 +119,7 @@
                 <li><a>Rich Snippets<span></span></a></li>
                 <li><a>Social SEO<span></span></a></li>
                 <li><a onclick='show_page_score();'>Page Analysis<span></span></a></li>
-
+                <li><a>Noindex / Nofollow<span></span></a></li>
             </ul>
 
             <!-- Content container -->
@@ -662,6 +662,31 @@
                     <!-- Zozo Tabs nested (Score) End-->
                     </div>
                 </div>
+
+
+                <!-- General Settings -->
+                <div>
+                    <!-- Zozo Tabs nested (Overview) Start-->
+                    <div class="wsw-post-settings">
+
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label"><?php echo 'Use META robot tag'; ?></label>
+                            <div class="col-sm-9">
+                                <label style="width: 100%;">
+                                    <input type="checkbox" id="wsw_is_meta_robot_noindex" <?php echo ($wsw_is_meta_robot_noindex =='1')?'checked':''?> >
+                                    Allow SEOWizard to tell search engines not to index this post.
+                                </label>
+                                <label style="width: 100%;">
+                                    <input type="checkbox" id="wsw_is_meta_robot_nofollow" <?php echo ($wsw_is_meta_robot_nofollow =='1')?'checked':''?> >
+                                    Allow SEOWizard to tell search engines not to spider links on this post.
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <!--  Zozo Tabs nested (Overview) End-->
+                </div>
+
+
 
             </div>
 

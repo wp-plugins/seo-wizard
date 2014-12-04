@@ -1,10 +1,10 @@
 ﻿=== SEO ===
 Contributors: Seo UK Team
 Donate link: http://seo.uk.net
-Tags: seo, page, pages, post, posts, plugin, google, meta, search engine optimization, sitemap, sitemaps, robots, rss, yahoo, bing, multisite, canonical, nofollow, noindex, keywords, meta keywords, description, webmaster tools, google webmaster tools, analysis, score, snippets, facebook, twitter, author
+Tags: seo, page, pages, post, posts, plugin, 404, nofollow, google, meta, search engine optimization, sitemap, sitemaps, robots, rss, yahoo, bing, multisite, canonical, nofollow, noindex, keywords, meta keywords, description, webmaster tools, google webmaster tools, analysis, score, snippets, facebook, twitter, author
 Requires at least: 3.8
-Tested up to: 4.0
-Stable tag: 2.0.0
+Tested up to: 4.1
+Stable tag: 3.0.1
 
 SEO Wizard helps you write better content, write optimized meta titles and descriptions, integrate social media, view post/page analysis and much more!
 
@@ -64,7 +64,38 @@ Do you have questions? Please contact us at http://seo.uk.net/contact-us/
 
 1. Global Settings
 2. Advanced Settings
-3. Meta Tags Settings
-4. Rich Snippets
-5. Social Seo
-6. Page Analysis
+3. 404 Monitor
+4. XML Sitemap
+5. Pages/Posts Shows keyword score
+6. Meta Tags Settings
+7. Rich Snippets
+8. Social Seo
+9. Page Analysis
+10. Noindex / Nofollow
+
+== Changelog ==
+
+= Version 2.0.1 =
+
+1. XML Sitemap
+
+The Sitemaps allows a webmaster to inform search engines about URLs on a website that are available for crawling.
+A Sitemap is an XML file that lists the URLs for a site.
+
+2. Option to nofollow,noindex the particular page
+
+Set meta robots tags (index/noindex and follow/nofollow) for each individual post, page, category, tag, and post type archive on your blog. 
+
+3. Permalink Tweaker
+
+Lets you remove the permalink base for categories, tags, and/or custom taxonomies.
+For example, enable category base removal to convert http://example.com/category/example into http://example.com/example, and then pair that with a /%category%/%postname%/ permalink to enable some serious SEO siloing action.
+
+4. Meta Robot Tags Editor
+
+Add the <meta name="robots" content="noindex,follow" /> tag.
+
+5. 404 Monitor
+
+Improve the visiting experience of users and spiders by keeping tabs on "page not found" errors.
+Find out what URLs are referring visitors to 404 errors.

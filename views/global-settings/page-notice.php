@@ -148,7 +148,11 @@
 
 </div>
 
+<div class="updated" id="wsw-build-sitemap-view" style="display: none; margin-left: 10px;">
 
+    <p>Build Sitemap Successfully.</p>
+
+</div>
 
 <div class="updated" id="wsw-notice-support-view" style="<?php
 

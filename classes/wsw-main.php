@@ -5,7 +5,7 @@ if ( ! class_exists( 'WSW_Main' ) ) {
 	/**
 	 * Main / front controller class
 	 */
-	class WSW_Main extends WP_Module {
+	class WSW_Main extends WSW_Module {
 
 		protected $modules;
 		const VERSION    = '1.0.0';
@@ -48,6 +48,8 @@ if ( ! class_exists( 'WSW_Main' ) ) {
             self::$plugin_dir = plugin_dir_path(__FILE__);
             self::$plugin_url = plugins_url('', __FILE__);
             self::$plugin_name = plugin_basename(__FILE__);
+
+
             WSW_Settings::get_options();
 
             if(WSW_Main::$settings['wsw_initial_dt'] == ''){
@@ -55,6 +57,9 @@ if ( ! class_exists( 'WSW_Main' ) ) {
                 $options['wsw_initial_dt'] = time();
                 WSW_Settings::update_options($options);
             }
+
+            // create tables for plugin work
+            WSW_Model_Log::create_table();
 
 			$this->register_hook_callbacks();
 			$this->modules = array(
@@ -75,12 +80,11 @@ if ( ! class_exists( 'WSW_Main' ) ) {
 
         public function show_admin_notice() {
 
-                    $variables = array();
-                    $msg_warning_1[]='test';
-                    $variables['msg_warning'] = $msg_warning_1;
-                    echo self::render_template( 'global-settings/page-notice.php', $variables );
-                    unset($variables);
-
+            $variables = array();
+            $msg_warning_1[]='test';
+            $variables['msg_warning'] = $msg_warning_1;
+            echo self::render_template( 'global-settings/page-notice.php', $variables );
+            unset($variables);
         }
 
         public function admin_init() {
@@ -90,10 +94,12 @@ if ( ! class_exists( 'WSW_Main' ) ) {
                         wp_redirect(add_query_arg('page', 'wsw_dashboard_page', admin_url('admin.php')));
                     }
             }
-            add_action('admin_post_wsw_global_settings', array('WSW_Dashboard', 'save_global_settings'));
+
             add_action('admin_post_wsw_post_settings', array('WSW_Dashboard', 'save_post_settings'));
 
             add_action('wp_ajax_wsw_save_global_settings', array( 'WSW_Dashboard', 'ajax_save_global_settings'));
+            add_action('wp_ajax_wsw_build_sitemap', array( 'WSW_Dashboard', 'ajax_build_sitemap'));
+
             add_action('wp_ajax_wsw_save_post_settings', array( 'WSW_Dashboard', 'ajax_save_post_settings'));
             add_action('wp_ajax_wsw_calc_post_score', array( 'WSW_Dashboard', 'ajax_calc_post_score'));
             add_action('wp_ajax_wsw_calc_post_density', array( 'WSW_Dashboard', 'ajax_calc_post_density'));
@@ -242,7 +248,17 @@ if ( ! class_exists( 'WSW_Main' ) ) {
             $options = WSW_Main::$settings;
             $options['wsw_initial_dt'] = time();
             WSW_Settings::update_options($options);
+
+            wp_schedule_event(time(), 'daily', 'seowizard_sitemap_event');
+
             update_option('seo_wizard_do_activation_redirect', true);
+         }
+
+        public function deactivate() {
+           // WSW_Settings::delete_options();
+            remove_filter('category_rewrite_rules', 'WSW_Show::no_category_base_rewrite_rules');
+            global $wp_rewrite;
+            $wp_rewrite -> flush_rules();
         }
 
 	} // end WSW_Main

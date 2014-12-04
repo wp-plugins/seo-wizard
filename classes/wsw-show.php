@@ -5,7 +5,7 @@ if ( ! class_exists( 'WSW_Show' ) ) {
     /**
      * generate SEO info;
      */
-    class WSW_Show extends WP_Module {
+    class WSW_Show extends WSW_Module {
         /**
          * Constructor
          */
@@ -31,6 +31,24 @@ if ( ! class_exists( 'WSW_Show' ) ) {
             // Filter the Posts Slugs
             add_filter('name_save_pre', __CLASS__. '::filter_post_slug',10);
 
+
+            if(WSW_Main::$settings['chk_tweak_permalink'] == '1'){
+                // Strip the category base
+                add_action('created_category', __CLASS__. '::no_category_base_refresh_rules');
+                add_action('edited_category', __CLASS__. '::no_category_base_refresh_rules');
+                add_action('delete_category', __CLASS__. '::no_category_base_refresh_rules');
+                add_action('init', __CLASS__. '::no_category_base_permastruct');
+
+                // Add our custom category rewrite rules
+                add_filter('category_rewrite_rules', __CLASS__. '::no_category_base_rewrite_rules');
+                // Add 'category_redirect' query variable
+                add_filter('query_vars',  __CLASS__. '::no_category_base_query_vars');
+                // Redirect if 'category_redirect' is set
+                add_filter('request', __CLASS__. '::no_category_base_request');
+
+            }
+
+
         }
 
         function fake_login_head() {
@@ -51,23 +69,8 @@ if ( ! class_exists( 'WSW_Show' ) ) {
             // If settings is enable, filter the Slug
             $settings = WSW_Main::$settings;
 
-            if ($settings['chk_convertion_post_slug']=='1') {
-                // We don't want to change an existing slug
-                if ($slug) return $slug;
+            if ($settings['chk_tweak_permalink']=='1') {
 
-                $seo_slug = strtolower(stripslashes($_POST['post_title']));
-
-                $seo_slug = preg_replace('/&.+?;/', '', $seo_slug); // kill HTML entities
-                // kill anything that is not a letter, digit, space or apostrophe
-                $seo_slug = preg_replace ("/[^a-zA-Z0-9 \']/", "", $seo_slug);
-
-                // Turn it to an array and strip common words by comparing against c.w. array
-                $seo_slug_array = array_diff (explode(" ", $seo_slug), WSW_Settings::get_slugs_stop_words());
-
-                // Turn the sanitized array into a string
-                $seo_slug = implode("-", $seo_slug_array);
-
-                return $seo_slug;
             }
 
             return $slug;
@@ -142,6 +145,16 @@ if ( ! class_exists( 'WSW_Show' ) ) {
                     echo '<meta name="twitter:description" content="' . esc_attr( $settings[0]['social_twitter_description'] ) . '">' . "\n";
                 }
 
+                /*
+                * Add Robot meta data
+                */
+                if (WSW_Main::$settings['chk_use_meta_robot'] == '1') {
+                    $strIndex = 'index';
+                    if($settings[0]['is_meta_robot_noindex'] == '1') $strIndex = 'noindex';
+                    $strFollow = 'follow';
+                    if($settings[0]['is_meta_robot_nofollow'] == '1') $strIndex = 'nofollow';
+                    echo '<meta name="robots" content="' . $strIndex . ',' . $strFollow .'" />' . "\n";
+                }
             }
         }
 
@@ -268,7 +281,6 @@ if ( ! class_exists( 'WSW_Show' ) ) {
             return $filtered_content;
 
         }
-
 
         static function apply_biu_to_content($content, $keyword) {
             $settings = WSW_Main::$settings;
@@ -419,6 +431,68 @@ if ( ! class_exists( 'WSW_Show' ) ) {
             }
         }
 
+
+        /**
+         *
+         * Strip the category base
+         *
+         */
+
+        function no_category_base_refresh_rules() {
+            global $wp_rewrite;
+            $wp_rewrite -> flush_rules();
+        }
+
+        function no_category_base_permastruct() {
+            global $wp_rewrite, $wp_version;
+            if (version_compare($wp_version, '3.4', '<')) {
+                // For pre-3.4 support
+                $wp_rewrite -> extra_permastructs['category'][0] = '%category%';
+            } else {
+                $wp_rewrite -> extra_permastructs['category']['struct'] = '%category%';
+            }
+        }
+
+        function no_category_base_rewrite_rules($category_rewrite) {
+            //var_dump($category_rewrite); // For Debugging
+
+            $category_rewrite = array();
+            $categories = get_categories(array('hide_empty' => false));
+            foreach ($categories as $category) {
+                $category_nicename = $category -> slug;
+                if ($category -> parent == $category -> cat_ID)// recursive recursion
+                    $category -> parent = 0;
+                elseif ($category -> parent != 0)
+                    $category_nicename = get_category_parents($category -> parent, false, '/', true) . $category_nicename;
+                $category_rewrite['(' . $category_nicename . ')/(?:feed/)?(feed|rdf|rss|rss2|atom)/?$'] = 'index.php?category_name=$matches[1]&feed=$matches[2]';
+                $category_rewrite['(' . $category_nicename . ')/page/?([0-9]{1,})/?$'] = 'index.php?category_name=$matches[1]&paged=$matches[2]';
+                $category_rewrite['(' . $category_nicename . ')/?$'] = 'index.php?category_name=$matches[1]';
+            }
+            // Redirect support from Old Category Base
+            global $wp_rewrite;
+            $old_category_base = get_option('category_base') ? get_option('category_base') : 'category';
+            $old_category_base = trim($old_category_base, '/');
+            $category_rewrite[$old_category_base . '/(.*)$'] = 'index.php?category_redirect=$matches[1]';
+
+            //var_dump($category_rewrite); // For Debugging
+            return $category_rewrite;
+        }
+
+        function no_category_base_query_vars($public_query_vars) {
+            $public_query_vars[] = 'category_redirect';
+            return $public_query_vars;
+        }
+
+        function no_category_base_request($query_vars) {
+            //print_r($query_vars); // For Debugging
+            if (isset($query_vars['category_redirect'])) {
+                $catlink = trailingslashit(get_option('home')) . user_trailingslashit($query_vars['category_redirect'], 'category');
+                status_header(301);
+                header("Location: $catlink");
+                exit();
+            }
+            return $query_vars;
+        }
 
     } // end WSW_Show
 }

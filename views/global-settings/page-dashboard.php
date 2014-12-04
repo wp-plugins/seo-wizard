@@ -15,7 +15,7 @@
                 easing: "easeInOutCirc",
                 duration: 500
             },
-            defaultTab: "tab1"
+            defaultTab: "<?php echo $first_tab;?>"
         });
 
         /* jQuery activation and setting options for all nested tabs with class selector*/
@@ -38,13 +38,27 @@
 
 </script>
 
+<script>
+    // Save settings for Global.
+    function build_sitemap()
+    {
 
+        if(jQuery('#chk_make_sitemap').attr('checked')){
+            var data = {
+                action:'wsw_build_sitemap'
+            };
+
+            jQuery.post(ajax_object.ajax_url, data, function(respond) {
+                jQuery("#wsw-build-sitemap-view").show();
+            });
+
+        }
+    }
+</script>
 <div id="dashboard-page" class="box-border-box col-md-9" style="float: left; display:none; margin-right: 0px;margin-top: 0px;">
 
-    <form action="admin-post.php" id="wsw_global_setting_form" method="post" class="form-horizontal" role="form">
-        <input type="hidden" name="action" value="wsw_global_settings" >
-        <!-- Adding security through hidden referrer field -->
-        <?php wp_nonce_field( 'wsw_global_settings' ); ?>
+    <form action="admin.php?page=wsw_dashboard_page" id="wsw_log_404_form" method="post" class="form-horizontal" role="form">
+
         <!-- Zozo Tabs Start-->
         <div id="tabbed-nav">
             <!-- Tab Navigation Menu -->
@@ -52,6 +66,8 @@
                 <li><a>Global<span></span></a></li>
                 <li><a>Advanced<span></span></a></li>
                 <li><a>API Key<span></span></a></li>
+                <li><a>404 Monitor<span></span></a></li>
+                <li><a>XML Sitemap<span></span></a></li>
 
             </ul>
 
@@ -69,15 +85,7 @@
                             </label>
                          </div>
                     </div>
-                    <div class="form-group" style="display: none;">
-                        <label class="col-sm-1 control-label"></label>
-                        <div class="col-sm-11">
-                            <label style="width: 100%;">
-                                <input type="checkbox" id="chk_convertion_post_slug" <?php echo ($chk_convertion_post_slug =='1')?'checked':''?>>
-                                Allow SEO Wizard to removing common words from the slug.
-                            </label>
-                        </div>
-                    </div>
+
                     <div class="form-group">
                         <label class="col-sm-1 control-label"></label>
                         <div class="col-sm-11">
@@ -97,7 +105,15 @@
                             </label>
                         </div>
                     </div>
-
+                    <div class="form-group">
+                        <label class="col-sm-1 control-label"></label>
+                        <div class="col-sm-11">
+                            <label style="width: 100%;">
+                                <input type="checkbox" id="chk_tweak_permalink" <?php echo ($chk_tweak_permalink =='1')?'checked':''?>>
+                                Allow SEO Wizard to Strip the category base (usually /category/) from the category URL.
+                            </label>
+                        </div>
+                    </div>
                     <div class="form-group">
                         <label class="col-sm-1 control-label"></label>
                         <div class="col-sm-11">
@@ -128,12 +144,12 @@
                         </div>
                     </div>
 
-                    <div class="form-group" style="display: none;">
+                    <div class="form-group">
                         <label class="col-sm-1 control-label"></label>
                         <div class="col-sm-11">
                             <label style="width: 100%;">
-                                <input type="checkbox" id="chk_use_dublin" <?php echo ($chk_use_dublin =='1')?'checked':''?>>
-                                Enable Dublin Core in posts Settings.
+                                <input type="checkbox" id="chk_use_meta_robot" <?php echo ($chk_use_meta_robot =='1')?'checked':''?>>
+                                Enable Meta Robot Tag in posts Settings.
                             </label>
                         </div>
                     </div>
@@ -312,6 +328,44 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- 404 Log -->
+                <div>
+
+                    <div class="form-group">
+                        <div class="col-sm-12">
+                            <?php
+                            $table_list = new WSW_Table_Log();
+                            $table_list->prepare_items();
+                            ?>
+                                <input type="hidden" name="page" value="wsw_log_404">
+                                <?php
+                                $table_list->display();
+                                ?>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- XML Sitemap -->
+                <div>
+
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label"></label>
+                        <div class="col-sm-9">
+                            <label style="width: 100%;">
+                                <input type="checkbox" id="chk_make_sitemap" <?php echo ($chk_make_sitemap == '1')?'checked':''?>>
+                                Check this box to enable XML sitemap functionality.
+                            </label>
+
+                            <button type="button" onclick="build_sitemap();">Build Sitemap Now</button>
+                            <a href="<?php echo home_url() . '/sitemap.xml';?>"><?php echo home_url() . '/sitemap.xml';?></a>
+
+                        </div>
+                    </div>
+
+                </div>
+
             </div>
 
         </div>
