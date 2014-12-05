@@ -41,7 +41,7 @@ define( 'WSW_REQUIRED_WP_VERSION',  '3.1' );
     );
 
     foreach ($files as $file) {
-        require_once __DIR__.$file.'.php';
+        require_once plugin_dir_path( __FILE__ ).$file.'.php';
     }
 
 // Init Plugin
