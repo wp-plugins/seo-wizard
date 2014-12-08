@@ -4,7 +4,7 @@ Donate link: http://seo.uk.net
 Tags: seo, page, pages, post, posts, plugin, 404, nofollow, google, meta, search engine optimization, sitemap, sitemaps, robots, rss, yahoo, bing, multisite, canonical, nofollow, noindex, keywords, meta keywords, description, webmaster tools, google webmaster tools, analysis, score, snippets, facebook, twitter, author
 Requires at least: 3.8
 Tested up to: 4.1
-Stable tag: 3.0.1
+Stable tag: 3.0.2
 
 SEO Wizard helps you write better content, write optimized meta titles and descriptions, integrate social media, view post/page analysis and much more!
 
@@ -74,6 +74,9 @@ Do you have questions? Please contact us at http://seo.uk.net/contact-us/
 10. Noindex / Nofollow
 
 == Changelog ==
+
+= Version 2.0.2 =
+* Sitemap Functionality Fixed
 
 = Version 2.0.1 =
 
