@@ -142,7 +142,7 @@ if ( ! class_exists( 'WSW_Dashboard' ) ) {
             $settings = WSW_Main::$settings;
             $settings['chk_make_sitemap'] = '1';
             WSW_Settings::update_options($settings);
-
+            self::build_sitemap();
         }
 
 
