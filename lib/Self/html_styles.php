@@ -616,30 +616,57 @@ if (!class_exists('WSW_HtmlStyles')) {
         	$str_arr = explode('<img',$content);
         	$new_str_arr = array();
 
-        	for ($i=0;$i<count($str_arr);$i++) { 
-        		if ($i==0) // Ignore the first piece of html because there isn't no <img tag
+        	for ($i=0; $i<count($str_arr); $i++) {
+        		if ($i == 0) // Ignore the first piece of html because there isn't no <img tag
         			$new_str_arr[] = $str_arr[$i];
         		else {
         			$piece = $str_arr[$i];
         			
         			{
-        				$pos_bigger_than = strpos($piece,'>'); // Finding the next >, is the one that close the <img tag
+        				$pos_bigger_than = strpos($piece, '>'); // Finding the next >, is the one that close the <img tag
         			}
         			if ($pos_bigger_than) {
         				// Check if between the beginning of the $piece up to the next > possition is an alt tag
         				
         				{
-        					$sub_piece = substr($piece,0,$pos_bigger_than);
+        					$sub_piece = substr($piece, 0, $pos_bigger_than);
         				}
-	        				
+
+                /*
+                 * Image Title
+                 */
+                if ($title_decoration_type != 'none') {
+
+                  {
+                    if (substr_count($sub_piece, ' title=') == 0
+                      && substr_count($sub_piece, ' title =') == 0
+                    ) { // Haven't alt tag, so ADD it
+
+                      $piece = ' title="' . $title_value . '"' . $piece;
+                    }
+                    else {
+                      // Check if has title tag but is empty, or if the option of "all" is selected
+                      $inside_title_attr = trim(self::get_content_in_alt_or_title($sub_piece, 'title'), "'\" \\");
+                      if ($inside_title_attr == '' || $title_decoration_type == 'all'){
+                        // replace old tag value with new one
+                        // Take in care the case in this the "title" is separated to the "="
+                        $piece = str_ireplace('title =', 'title=', $piece);
+
+                        $piece = str_ireplace(' title="' . $inside_title_attr . '"',' title="' . $title_value . '"',$piece);
+                        $piece = str_ireplace(" title='" . $inside_title_attr . "'",' title="' . $title_value . '"',$piece);
+                      }
+                    }
+                  }
+                }
+
         				/*
         				 * Image Alt
         				 */
-        				if ($alt_decoration_type!='none') {
+        				if ($alt_decoration_type != 'none') {
 	        				
         					{
-        						if (substr_count($sub_piece,' alt=')==0
-        								&& substr_count($sub_piece,' alt =')==0
+        						if (substr_count($sub_piece, ' alt=')==0
+        								&& substr_count($sub_piece, ' alt =')==0
         						) { // Haven't alt tag, so ADD it
         						
         							$piece = ' alt="' . $alt_value . '"' . $piece;
@@ -648,8 +675,8 @@ if (!class_exists('WSW_HtmlStyles')) {
         						}
         						else {
         							// Check if has alt tag but is empty, or if the option of "all" is selected
-        							$inside_alt_tag = trim(self::get_content_in_alt_or_title($sub_piece),"'\" \\");
-        							if ($inside_alt_tag=='' || $alt_decoration_type=='all'){
+        							$inside_alt_tag = trim(self::get_content_in_alt_or_title($sub_piece), "'\" \\");
+        							if ($inside_alt_tag == '' || $alt_decoration_type == 'all'){
         								// replace old tag value with new one
         								// Take in care the case in this the "alt" is separated to the "="
         								$piece = str_ireplace('alt =', 'alt=', $piece);
@@ -662,33 +689,8 @@ if (!class_exists('WSW_HtmlStyles')) {
         						}
         					}
         				}
-        				
-	        			/*
-	        			 * Image Title
-	        			 */
-        				if ($title_decoration_type!='none') {
-	        				
-        					{
-		        				if (substr_count($sub_piece,' title=')==0 
-		        				&& substr_count($sub_piece,' title =')==0
-		        					) { // Haven't alt tag, so ADD it
-		        					
-		        					$piece = ' title="' . $title_value . '"' . $piece;
-		        				}
-		        				else {
-		        					// Check if has title tag but is empty, or if the option of "all" is selected
-			        				$inside_title_attr = trim(self::get_content_in_alt_or_title($sub_piece,'title'),"'\" \\");
-			        				if ($inside_title_attr=='' || $title_decoration_type=='all'){
-			        					// replace old tag value with new one
-			        					// Take in care the case in this the "title" is separated to the "="
-			        					$piece = str_ireplace('title =', 'title=', $piece);
-			        					
-			        					$piece = str_ireplace(' title="' . $inside_title_attr . '"',' title="' . $title_value . '"',$piece);
-			        					$piece = str_ireplace(" title='" . $inside_title_attr . "'",' title="' . $title_value . '"',$piece);
-		        					}
-		        				}
-        					}
-        				}
+
+
         			}
         				
         			$new_str_arr[] = $piece;

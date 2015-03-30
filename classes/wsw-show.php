@@ -169,7 +169,7 @@ if ( ! class_exists( 'WSW_Show' ) ) {
                 //$settings = get_post_meta( $post_id , 'wsw-settings');
 
                 if (WSW_Main::$settings['chk_author_linking'] == '1') {
-                     echo '<div style="text-align: center;">This site is using the Seo Wizard plugin powered by <a href="http://seo.uk.net/" title="Seo Uk">http://seo.uk.net/</a></div>' . "\n";
+                     echo '<div style="text-align: center;">This site is using the Seo Wizard plugin created by <a href="http://seo.uk.net/" target="_blank">http://seo.uk.net/</a></div>' . "\n";
                 }
             }
         }
